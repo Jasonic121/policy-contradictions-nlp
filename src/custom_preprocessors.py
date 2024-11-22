@@ -8,7 +8,7 @@ from typing import (Callable, Dict, Generator, List, Literal, Optional, Set,
 from haystack.nodes import PreProcessor
 from haystack.schema import Document
 from tqdm.auto import tqdm
-
+import spacy
 
 class SplitCleanerPreProcessor(PreProcessor):
     def __init__(
@@ -24,14 +24,24 @@ class SplitCleanerPreProcessor(PreProcessor):
         """
         super().__init__(*args, **kwargs)
         self.split_cleaner = split_cleaner
+        # Load spaCy model for sentence splitting
+        self.nlp = spacy.load('en_core_web_sm', disable=['ner', 'tagger', 'parser'])
+        self.nlp.enable_pipe('senter')
 
-    def _split_into_units(self, text: str, split_by: str) -> Tuple[List[str], str]:
+    def _split_into_units(
+        self, 
+        text: str, 
+        split_by: str,
+        tokenizer: Optional[any] = None  # Add tokenizer parameter
+    ) -> Tuple[List[str], str]:
+        """Split text into units using the specified method."""
         if split_by == "passage":
             elements = text.split("\n\n")
             split_at = "\n\n"
         elif split_by == "sentence":
-            elements = self._split_sentences(text)
-            split_at = ""  # whitespace will be preserved while splitting text into sentences
+            doc = self.nlp(text)
+            elements = [sent.text.strip() for sent in doc.sents]
+            split_at = " "
         elif split_by == "word":
             elements = text.split(" ")
             split_at = " "

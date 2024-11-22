@@ -22,10 +22,19 @@ def load_documents() -> DataFrame:
 
 def preprocess_documents(df: DataFrame) -> List[Document]:
     print("[▶] Processing data...")
+    
+    # Create fulltext from text_by_page
     df['fulltext'] = df.text_by_page.apply(processing.clean_and_combine_pages)
+    
+    # Add any missing required columns
+    if 'filename' not in df.columns:
+        df['filename'] = [f"doc_{i}" for i in range(len(df))]
+    if 'url' not in df.columns:
+        df['url'] = df['filepath']
 
     if SUBSET_SIZE:
         df = df.iloc[:SUBSET_SIZE]
+    
     docs = processing.convert_frame_to_haystack(df)
 
     print(" | [+] Splitting into chunks")
@@ -48,9 +57,6 @@ def preprocess_documents(df: DataFrame) -> List[Document]:
     )
     doc_chunks = chunker.process(docs)
 
-    # NOTE: We might consider split into sentences before chunking. This would
-    # make it easy to remove duplicate sentences (such as headers, footers,
-    # disclaimers, legal text) prior to chunk embedding.
     doc_chunks = processing.remove_identical_chunks(doc_chunks)
     print("[✓] Finished processing!")
     return doc_chunks

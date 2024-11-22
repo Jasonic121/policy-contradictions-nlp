@@ -1,7 +1,9 @@
 # Which dataset to load.
-DATASET_FILEPATH = "./data/DoD Issuances/contradictions_datasets_dod_issuances.zip"
+# DATASET_FILEPATH = "./data/test-fcc"
+DATASET_FILEPATH = "./../data/test-policies" 
+
 # How many documents to include in the pipeline run.
-SUBSET_SIZE = 10                # DEMO VALUE ::: Recommend `None` for full pipeline.
+SUBSET_SIZE = None                # DEMO VALUE ::: Recommend `None` for full pipeline.
 # Parameters for cleaning sentences in initial chunking
 CHUNK_CLEANING_TOC_PERIOD_THRESHOLD = 5
 CHUNK_CLEANING_LENGTH_MINIMUM = 15

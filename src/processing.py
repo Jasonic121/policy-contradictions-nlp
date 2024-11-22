@@ -52,19 +52,38 @@ def clean_and_combine_pages(text_by_page: List[str]) -> str:
 def convert_frame_to_haystack(
         df: DataFrame,
         content_col: str = 'fulltext',
-        meta_cols: List[str] = ('corpus', 'title', 'file_name', 'url', 'id'),
+        meta_cols: Optional[List[str]] = None,
 ) -> List[Document]:
     """
     Convert a dataframe of text documents and metadata into Haystack Document
     objects. The output can be passed to a Haystack PreProcessor node.
+    
+    Args:
+        df: DataFrame containing the documents
+        content_col: Name of column containing the document text
+        meta_cols: List of metadata columns. If None, uses all available columns 
+                  except content_col
     """
+    if meta_cols is None:
+        # Use all columns except the content column as metadata
+        meta_cols = [col for col in df.columns if col != content_col]
 
     content = df[content_col].to_list()
-    meta = df[list(meta_cols)].to_dict(orient='records')
-
+    
+    # Create metadata dictionary, only including columns that exist
+    available_meta_cols = [col for col in meta_cols if col in df.columns]
+    meta = df[available_meta_cols].to_dict(orient='records')
+    
+    # Add required fields if missing
     docs = []
     for i in range(df.shape[0]):
-        new_doc = Document(content=content[i], meta=meta[i])
+        metadata = meta[i].copy()
+        if 'id' not in metadata:
+            metadata['id'] = f"doc_{i}"
+        if 'title' not in metadata:
+            metadata['title'] = metadata.get('filename', f"Document {i}")
+            
+        new_doc = Document(content=content[i], meta=metadata)
         docs.append(new_doc)
 
     return docs
